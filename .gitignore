@@ -1,0 +1,12 @@
+*.o
+cef/*
+fltk/*
+*.app
+*.framework
+cefsimple
+process_helper
+CEFSimpleSample/*
+*.zip
+*.MOV
+.ninja_*
+*.mp4

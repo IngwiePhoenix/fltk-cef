@@ -1,0 +1,84 @@
+# Basic flags
+allFlags = -I. -I./cef -I./fltk -std=c++11
+linkFlags = -L./cef/Default -L./fltk/lib -lcef -lcef_dll_wrapper -lfltk -lpthread -lstdc++
+objcFlags = -framework Cocoa -lobjc
+CC = gcc $allFlags
+CXX = g++ $allFlags
+LD = gcc $linkFlags $objcFlags
+otherCommand = exit 0;
+
+# other
+frameworkName = Chromium Embedded Framework
+
+# Rules
+rule cc
+  command = $CC -c $in -o $out
+  description = Compiling: $in
+rule cxx
+  command = $CXX -c $in -o $out
+  description = Compiling: $in
+rule makeapp
+  command = if [ ! -d "./$out" ]; then mkdir -p $out/Contents/MacOS $out/Contents/Frameworks; fi $
+            && cp $in $out/Contents/MacOS $
+            && cp $infoPlist $out/Contents/Info.plist
+  description = Creating app bundle: $out
+rule makeframework
+  command = if [ ! -d "./$out" ]; then mkdir -p $out/Resources $out/Libraries; fi $
+            && cp $in $out/
+  description = Creating framework: $out
+rule link
+  command = $LD -o $out $in && $otherCommand
+  description = Linking: $out
+rule exec
+  command = $command
+  description = Running command...
+  
+# Objects
+build client.o: cxx client.cpp
+build simple_app.o: cxx simple_app.cpp
+build simple_handler.o: cxx simple_handler.cpp
+build process_helper.o: cxx process_helper.cpp
+
+# Binaries
+build process_helper: link process_helper.o
+  otherCommand = install_name_tool -change $
+                 "@executable_path/libcef.dylib" $
+                 "@executable_path/../../../$frameworkName.framework/$frameworkName" $
+                 ./process_helper
+build cefsimple: link client.o simple_app.o simple_handler.o
+  otherCommand = install_name_tool -change $
+                 "@executable_path/libcef.dylib" $
+                 "@executable_path/../Frameworks/$frameworkName.framework/$frameworkName" $
+                 ./cefsimple
+
+# Bundles
+build cefsimple.app: makeapp cefsimple
+  infoPlist = ./cef/cefclient/mac/Info.plist
+build process_helper.app: makeapp process_helper
+  infoPlist = ./cef/cefclient/mac/helper-Info.plist
+build cef.framework: makeframework ./cef/Default/libcef.dylib
+
+# Misc
+build all: exec | cef.framework process_helper.app cefsimple.app
+  command = rm -rf "$frameworkName.*" "cefsimple Helper*" $
+            && mv cef.framework "$frameworkName.framework" $
+            && mv "$frameworkName.framework/libcef.dylib" "$frameworkName.framework/$frameworkName" $
+            && mv "process_helper.app/Contents/MacOS/process_helper" "process_helper.app/Contents/MacOS/cefsimple Helper" $
+            && mv process_helper.app "cefsimple Helper.app" $
+            && cp -R "cefsimple Helper.app" "cefsimple.app/Contents/Frameworks/cefsimple Helper.app" $
+            && cp -R "cefsimple Helper.app" "cefsimple.app/Contents/Frameworks/cefsimple Helper EH.app" $
+            && cp -R "cefsimple Helper.app" "cefsimple.app/Contents/Frameworks/cefsimple Helper NP.app" $
+            && mv $
+                "cefsimple.app/Contents/Frameworks/cefsimple Helper NP.app/Contents/MacOS/cefsimple Helper" $
+                "cefsimple.app/Contents/Frameworks/cefsimple Helper NP.app/Contents/MacOS/cefsimple Helper NP" $
+            && mv $
+                "cefsimple.app/Contents/Frameworks/cefsimple Helper EH.app/Contents/MacOS/cefsimple Helper" $
+                "cefsimple.app/Contents/Frameworks/cefsimple Helper EH.app/Contents/MacOS/cefsimple Helper EH" $
+            && cp -R cef/Resources/ "$frameworkName.framework/Resources/" $
+            && cp cef/Default/*.so "$frameworkName.framework/Libraries" $
+            && cp cef/Default/libplugin_carbon_interpose.dylib cefsimple.app/Contents/Frameworks $
+            && cp -R "$frameworkName.framework" cefsimple.app/Contents/Frameworks
+build clean: exec
+  command = rm -rvf *.app *.framework *.o
+
+default all
