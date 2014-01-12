@@ -35,6 +35,7 @@ rule exec
   
 # Objects
 build client.o: cxx client.cpp
+build mac.o: cxx mac.mm
 build simple_app.o: cxx simple_app.cpp
 build simple_handler.o: cxx simple_handler.cpp
 build process_helper.o: cxx process_helper.cpp
@@ -45,7 +46,7 @@ build process_helper: link process_helper.o
                  "@executable_path/libcef.dylib" $
                  "@executable_path/../../../$frameworkName.framework/$frameworkName" $
                  ./process_helper
-build cefsimple: link client.o simple_app.o simple_handler.o
+build cefsimple: link client.o mac.o simple_app.o simple_handler.o
   otherCommand = install_name_tool -change $
                  "@executable_path/libcef.dylib" $
                  "@executable_path/../Frameworks/$frameworkName.framework/$frameworkName" $
@@ -79,6 +80,6 @@ build all: exec | cef.framework process_helper.app cefsimple.app
             && cp cef/Default/libplugin_carbon_interpose.dylib cefsimple.app/Contents/Frameworks $
             && cp -R "$frameworkName.framework" cefsimple.app/Contents/Frameworks
 build clean: exec
-  command = rm -rvf *.app *.framework *.o
+  command = rm -rvf *.app *.framework *.o cefsimple process_helper
 
 default all

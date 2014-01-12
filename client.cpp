@@ -19,7 +19,8 @@
 
 // Fixups
 #ifdef __APPLE__
-#import "include/cef_application_mac.h"
+#include "include/cef_application_mac.h"
+#include "mac.h"
 #endif
 
 // other includes
@@ -48,6 +49,9 @@ int main(int argc, char **argv) {
   	
 	// Start off with an FLTK window, we need one.
 	Fl_CEF_Window *win = new Fl_CEF_Window(500,500);
+	#ifdef __APPLE__
+	void* old_focus = prepare_FL_Window_for_cef(win);
+	#endif
 
   	// SimpleApp implements application-level callbacks. It will create the first
   	// browser instance in OnContextInitialized() after CEF has initialized.
@@ -68,6 +72,9 @@ int main(int argc, char **argv) {
   	// Shut down CEF.
   	CefShutdown();
 	win->end();
+	#ifdef __APPLE__
+	release_after_cef(old_focus);
+	#endif
 
     return 0;
 }

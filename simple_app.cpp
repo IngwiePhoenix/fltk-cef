@@ -8,8 +8,7 @@
 #include <string>
 
 #ifdef __APPLE__
-// This is a C/C++ api-thingy-ding to use ObjC from a Non objective-* scope. useful, as we already use it minimaly :)
-// but lets first stick to mm.
+#include "mac.h"
 #endif
 
 SimpleApp::SimpleApp(Fl_CEF_Window *win) { this->window=win; }
@@ -20,13 +19,7 @@ void SimpleApp::OnContextInitialized() {
   // Information used when creating the native window.
   CefWindowInfo window_info;
   #ifdef __APPLE__
-  /*
-  	We dont need to do anything here.
-  	The browser will automatically grab the actual latest NSWindow and use it - although its an FLWindow.
-  	Therefore, we do not need to use
-  		CefWindowInfo -> setAsChild(NSView, x, y, h, w)
-  	Bad thing is: we don't get all additional controls we may want.
-  */
+  mac_set_as_child(&window_info, this->window);
   #endif
 
 
